@@ -2,24 +2,20 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.0",
-    "express": "^5.2.1",
-    "mongoose": "^9.4.1",
-    "multer": "^2.1.1",
-    "socket.io": "^4.8.3"
-  },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "wrangler": "^4.20.0"
+  },
+  "dependencies": {
+    "akah": "file:.."
   }
 }

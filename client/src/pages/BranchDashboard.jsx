@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, socket } from '../api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Clock, Loader2, Phone, User, Car, Package, CheckCircle2 } from 'lucide-react';
 
 const BranchDashboard = () => {
   const [orders, setOrders] = useState([]);

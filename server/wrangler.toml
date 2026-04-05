@@ -1,0 +1,10 @@
+name = "akah-api"
+main = "index.js"
+compatibility_date = "2026-04-05"
+
+[durable_objects]
+bindings = [{ name = "ORDER_HUB", class_name = "OrderHub" }]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["OrderHub"]
