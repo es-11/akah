@@ -101,7 +101,7 @@ const MenuPage = () => {
             >
               <div className="w-1/3 aspect-square bg-gray-100 overflow-hidden">
                 <img 
-                  src={item.image || 'https://via.placeholder.com/150'} 
+                  src={item.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop'} 
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />

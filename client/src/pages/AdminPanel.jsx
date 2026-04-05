@@ -54,6 +54,19 @@ const AdminPanel = () => {
     }
   };
 
+  const getDefaultImage = (category) => {
+    switch (category) {
+      case 'Beef Burgers': return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop';
+      case 'Chicken Burgers': return 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?q=80&w=800&auto=format&fit=crop';
+      case 'Sandwiches': return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=800&auto=format&fit=crop';
+      case 'Indomie': return 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?q=80&w=800&auto=format&fit=crop';
+      case 'Fries': return 'https://images.unsplash.com/photo-1573015084185-7205e3644695?q=80&w=800&auto=format&fit=crop';
+      case 'Kids Meals': return 'https://images.unsplash.com/photo-1560684848-57ca91cea189?q=80&w=800&auto=format&fit=crop';
+      case 'Drinks': return 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=800&auto=format&fit=crop';
+      default: return 'https://via.placeholder.com/150';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -70,7 +83,7 @@ const AdminPanel = () => {
           description: editingItem.description,
           price: Number(editingItem.price),
           category: editingItem.category,
-          image: editingItem.image || null,
+          image: editingItem.image || getDefaultImage(editingItem.category),
         };
         const res = await fetch('/.netlify/functions/menu-admin', {
           method: 'PUT',
@@ -88,7 +101,7 @@ const AdminPanel = () => {
           description: newItem.description,
           price: Number(newItem.price),
           category: newItem.category,
-          image: newItem.image || null,
+          image: newItem.image || getDefaultImage(newItem.category),
         };
         const res = await fetch('/.netlify/functions/menu-admin', {
           method: 'POST',

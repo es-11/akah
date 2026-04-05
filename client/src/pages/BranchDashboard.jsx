@@ -6,15 +6,22 @@ import { supabase } from '../supabaseClient';
 const BranchDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState('live'); // 'live' or 'history'
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('orders')
-          .select('id,phone,name,car_name,car_type,car_plate,notes,total_price,status,created_at,order_items(id,item_id,name,price,quantity)')
-          .neq('status', 'completed')
-          .order('created_at', { ascending: false });
+          .select('id,phone,name,car_name,car_type,car_plate,notes,total_price,status,created_at,order_items(id,item_id,name,price,quantity)');
+        
+        if (view === 'live') {
+          query = query.neq('status', 'completed');
+        } else {
+          query = query.eq('status', 'completed');
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
         if (error) throw error;
         const normalized = (data || []).map((row) => ({
           _id: row.id,
@@ -51,7 +58,7 @@ const BranchDashboard = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         async (payload) => {
-          if (payload.eventType === 'INSERT') {
+          if (payload.eventType === 'INSERT' && view === 'live') {
             const audio = new Audio('/notification.mp3');
             audio.play().catch(() => {});
           }
@@ -63,7 +70,7 @@ const BranchDashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [view]);
 
   const updateStatus = async (id, status) => {
     try {
@@ -103,10 +110,28 @@ const BranchDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <header className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm">
         <div>
           <h1 className="text-3xl font-bold text-secondary">شاشة المطبخ / الفرع</h1>
           <p className="text-gray-500">متابعة الطلبات المباشرة - عكة برجر</p>
+        </div>
+        <div className="flex items-center gap-3 bg-gray-100 p-1.5 rounded-xl">
+          <button
+            onClick={() => setView('live')}
+            className={`px-6 py-2.5 rounded-lg font-black transition-all ${
+              view === 'live' ? 'bg-primary text-secondary shadow-md' : 'text-gray-500 hover:text-secondary'
+            }`}
+          >
+            الطلبات الحالية
+          </button>
+          <button
+            onClick={() => setView('history')}
+            className={`px-6 py-2.5 rounded-lg font-black transition-all ${
+              view === 'history' ? 'bg-primary text-secondary shadow-md' : 'text-gray-500 hover:text-secondary'
+            }`}
+          >
+            سجل الطلبات
+          </button>
         </div>
         <div className="flex items-center gap-4 bg-primary/10 px-6 py-3 rounded-xl border border-primary/20">
           <Clock size={24} className="text-primary" />
