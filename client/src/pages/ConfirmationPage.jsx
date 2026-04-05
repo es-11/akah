@@ -45,9 +45,11 @@ const ConfirmationPage = () => {
       const { error: itemsError } = await supabase.from('order_items').insert(orderItemsPayload);
       if (itemsError) throw itemsError;
 
+      // Store order ID for tracking
+      localStorage.setItem('lastOrderId', insertedOrder.id);
+
       clearCart();
-      alert('تم إرسال طلبك بنجاح! جاري التجهيز...');
-      navigate('/');
+      navigate(`/track-order/${insertedOrder.id}`);
     } catch (err) {
       console.error('Error sending order:', err);
       alert('حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.');

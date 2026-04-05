@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useUser } from '../context/UserContext';
-import { Phone, User, Car } from 'lucide-react';
+import { Phone, User, Car, Search } from 'lucide-react';
 
 const WelcomePage = () => {
   const [formData, setFormData] = useState({
@@ -13,8 +13,16 @@ const WelcomePage = () => {
     plateNumber: '',
   });
   const [error, setError] = useState('');
+  const [lastOrderId, setLastOrderId] = useState(null);
   const { setUser } = useUser();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedOrderId = localStorage.getItem('lastOrderId');
+    if (savedOrderId) {
+      setLastOrderId(savedOrderId);
+    }
+  }, []);
 
   const handlePhoneChange = (e) => {
     let val = e.target.value;
@@ -135,6 +143,17 @@ const WelcomePage = () => {
           >
             ابدأ الطلب
           </button>
+
+          {lastOrderId && (
+            <button
+              type="button"
+              onClick={() => navigate(`/track-order/${lastOrderId}`)}
+              className="w-full mt-4 bg-secondary text-primary font-bold py-4 rounded-xl shadow-md flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors active:scale-95 transform border border-primary/20"
+            >
+              <Search size={18} />
+              متابعة طلبي الحالي
+            </button>
+          )}
         </form>
       </motion.div>
     </div>

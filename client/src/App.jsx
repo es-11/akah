@@ -3,6 +3,7 @@ import WelcomePage from './pages/WelcomePage';
 import MenuPage from './pages/MenuPage';
 import CartPage from './pages/CartPage';
 import ConfirmationPage from './pages/ConfirmationPage';
+import TrackOrder from './pages/TrackOrder';
 import BranchDashboard from './pages/BranchDashboard';
 import AdminPanel from './pages/AdminPanel';
 import { CartProvider } from './context/CartContext';
@@ -19,6 +20,7 @@ function App() {
               <Route path="/menu" element={<MenuPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/confirmation" element={<ConfirmationPage />} />
+              <Route path="/track-order/:id" element={<TrackOrder />} />
               <Route path="/branch-dashboard" element={<BranchDashboard />} />
               <Route path="/admin" element={<AdminPanel />} />
             </Routes>
