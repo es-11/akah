@@ -55,7 +55,7 @@ exports.handler = async (event) => {
 
   const id = typeof body.id === 'string' ? body.id.trim() : '';
   const status = typeof body.status === 'string' ? body.status.trim() : '';
-  if (!id || !['pending', 'preparing', 'ready'].includes(status)) return json(400, { error: 'Invalid payload' });
+  if (!id || !['pending', 'preparing', 'ready', 'completed'].includes(status)) return json(400, { error: 'Invalid payload' });
 
   const res = await supabaseRequest(`/orders?id=eq.${encodeURIComponent(id)}`, {
     method: 'PATCH',

@@ -13,6 +13,7 @@ const BranchDashboard = () => {
         const { data, error } = await supabase
           .from('orders')
           .select('id,phone,name,car_name,car_type,car_plate,notes,total_price,status,created_at,order_items(id,item_id,name,price,quantity)')
+          .neq('status', 'completed')
           .order('created_at', { ascending: false });
         if (error) throw error;
         const normalized = (data || []).map((row) => ({
@@ -90,6 +91,7 @@ const BranchDashboard = () => {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'preparing': return 'bg-blue-100 text-blue-800';
       case 'ready': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-gray-100 text-gray-500';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -208,9 +210,12 @@ const BranchDashboard = () => {
                     </button>
                   )}
                   {order.status === 'ready' && (
-                    <div className="flex-1 text-center py-4 bg-green-50 text-accent font-black rounded-2xl border-2 border-green-100 flex items-center justify-center gap-2">
-                      <CheckCircle2 size={18} /> جاهز للاستلام
-                    </div>
+                    <button
+                      onClick={() => updateStatus(order._id, 'completed')}
+                      className="flex-1 bg-accent text-white font-black py-4 rounded-2xl shadow-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      <CheckCircle2 size={18} /> تم التسليم
+                    </button>
                   )}
                 </div>
               </motion.div>
