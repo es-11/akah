@@ -1,10 +1,10 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, Phone, User, Car, MessageSquare, ShoppingBag, Send } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
-import axios from 'axios';
-import { api } from '../api';
+import { supabase } from '../supabaseClient';
 
 const ConfirmationPage = () => {
   const { cart, totalPrice, notes, clearCart } = useCart();
@@ -17,21 +17,34 @@ const ConfirmationPage = () => {
     setIsSubmitting(true);
     
     try {
-      const orderData = {
-        phone: user.phone,
-        name: user.name,
-        car: user.car,
-        items: cart.map(item => ({
-          itemId: item._id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        })),
-        notes,
-        totalPrice,
-      };
+      const { data: insertedOrder, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          phone: user.phone,
+          name: user.name || null,
+          car_name: user.car?.name || null,
+          car_type: user.car?.type || null,
+          car_plate: user.car?.plate || null,
+          notes: notes || null,
+          total_price: totalPrice,
+          status: 'pending',
+        })
+        .select('id')
+        .single();
 
-      await api.post('/api/orders', orderData);
+      if (orderError) throw orderError;
+
+      const orderItemsPayload = cart.map((item) => ({
+        order_id: insertedOrder.id,
+        item_id: item._id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItemsPayload);
+      if (itemsError) throw itemsError;
+
       clearCart();
       alert('تم إرسال طلبك بنجاح! جاري التجهيز...');
       navigate('/');

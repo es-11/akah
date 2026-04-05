@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { api, socket } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Loader2, Phone, User, Car, Package, CheckCircle2 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 const BranchDashboard = () => {
   const [orders, setOrders] = useState([]);
@@ -10,8 +10,32 @@ const BranchDashboard = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await api.get('/api/orders');
-        setOrders(res.data);
+        const { data, error } = await supabase
+          .from('orders')
+          .select('id,phone,name,car_name,car_type,car_plate,notes,total_price,status,created_at,order_items(id,item_id,name,price,quantity)')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        const normalized = (data || []).map((row) => ({
+          _id: row.id,
+          phone: row.phone,
+          name: row.name,
+          car: {
+            name: row.car_name,
+            type: row.car_type,
+            plate: row.car_plate,
+          },
+          items: (row.order_items || []).map((it) => ({
+            itemId: it.item_id,
+            name: it.name,
+            price: it.price,
+            quantity: it.quantity,
+          })),
+          notes: row.notes,
+          totalPrice: row.total_price,
+          status: row.status,
+          createdAt: row.created_at,
+        }));
+        setOrders(normalized);
       } catch (err) {
         console.error('Error fetching orders:', err);
       } finally {
@@ -20,28 +44,42 @@ const BranchDashboard = () => {
     };
     fetchOrders();
 
-    socket.on('newOrder', (newOrder) => {
-      setOrders(prev => [newOrder, ...prev]);
-      // Play a notification sound
-      const audio = new Audio('/notification.mp3');
-      audio.play().catch(() => {}); // Browser might block auto-play
-    });
-
-    socket.on('orderUpdated', (updatedOrder) => {
-      setOrders(prev => prev.map(order => 
-        order._id === updatedOrder._id ? updatedOrder : order
-      ));
-    });
+    const channel = supabase
+      .channel('orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        async (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const audio = new Audio('/notification.mp3');
+            audio.play().catch(() => {});
+          }
+          await fetchOrders();
+        }
+      )
+      .subscribe();
 
     return () => {
-      socket.off('newOrder');
-      socket.off('orderUpdated');
+      supabase.removeChannel(channel);
     };
   }, []);
 
   const updateStatus = async (id, status) => {
     try {
-      await api.patch(`/api/orders/${id}/status`, { status });
+      const adminToken = import.meta.env.VITE_ADMIN_TOKEN || '';
+      if (!adminToken) {
+        alert('لا يوجد رمز إدارة (ADMIN TOKEN) مضبوط');
+        return;
+      }
+      const res = await fetch('/.netlify/functions/order-status', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': adminToken,
+        },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) throw new Error('Failed to update status');
     } catch (err) {
       console.error('Error updating status:', err);
     }

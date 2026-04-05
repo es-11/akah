@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit2, Trash2, Save, X, Image as ImageIcon, Layout, DollarSign, FileText } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 const categories = [
   "Beef Burgers",
@@ -32,8 +32,21 @@ const AdminPanel = () => {
 
   const fetchMenu = async () => {
     try {
-      const res = await api.get('/api/menu');
-      setMenuItems(res.data);
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select('id,name,description,price,category,image')
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
+      if (error) throw error;
+      const normalized = (data || []).map((row) => ({
+        _id: row.id,
+        name: row.name,
+        description: row.description,
+        price: row.price,
+        category: row.category,
+        image: row.image,
+      }));
+      setMenuItems(normalized);
     } catch (err) {
       console.error('Error fetching menu:', err);
     } finally {
@@ -44,11 +57,48 @@ const AdminPanel = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const adminToken = import.meta.env.VITE_ADMIN_TOKEN || '';
+      if (!adminToken) {
+        alert('لا يوجد رمز إدارة (ADMIN TOKEN) مضبوط');
+        return;
+      }
+
       if (editingItem) {
-        await api.put(`/api/menu/${editingItem._id}`, editingItem);
+        const payload = {
+          id: editingItem._id,
+          name: editingItem.name,
+          description: editingItem.description,
+          price: Number(editingItem.price),
+          category: editingItem.category,
+          image: editingItem.image || null,
+        };
+        const res = await fetch('/.netlify/functions/menu-admin', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': adminToken,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error('Failed to update item');
         setEditingItem(null);
       } else {
-        await api.post('/api/menu', newItem);
+        const payload = {
+          name: newItem.name,
+          description: newItem.description,
+          price: Number(newItem.price),
+          category: newItem.category,
+          image: newItem.image || null,
+        };
+        const res = await fetch('/.netlify/functions/menu-admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': adminToken,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error('Failed to create item');
         setNewItem({
           name: '',
           description: '',
@@ -67,7 +117,20 @@ const AdminPanel = () => {
   const deleteItem = async (id) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الصنف؟')) {
       try {
-        await api.delete(`/api/menu/${id}`);
+        const adminToken = import.meta.env.VITE_ADMIN_TOKEN || '';
+        if (!adminToken) {
+          alert('لا يوجد رمز إدارة (ADMIN TOKEN) مضبوط');
+          return;
+        }
+        const res = await fetch('/.netlify/functions/menu-admin', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': adminToken,
+          },
+          body: JSON.stringify({ id }),
+        });
+        if (!res.ok) throw new Error('Failed to delete item');
         fetchMenu();
       } catch (err) {
         console.error('Error deleting item:', err);

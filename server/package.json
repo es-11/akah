@@ -14,8 +14,5 @@
   "description": "",
   "devDependencies": {
     "wrangler": "^4.20.0"
-  },
-  "dependencies": {
-    "akah": "file:.."
   }
 }

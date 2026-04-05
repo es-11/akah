@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Plus, Minus, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 const categories = [
   "Beef Burgers",
@@ -24,8 +24,21 @@ const MenuPage = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await api.get('/api/menu');
-        setMenuItems(res.data);
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select('id,name,description,price,category,image')
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+        if (error) throw error;
+        const normalized = (data || []).map((row) => ({
+          _id: row.id,
+          name: row.name,
+          description: row.description,
+          price: row.price,
+          category: row.category,
+          image: row.image,
+        }));
+        setMenuItems(normalized);
       } catch (err) {
         console.error('Error fetching menu:', err);
       } finally {
